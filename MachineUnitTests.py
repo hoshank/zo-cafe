@@ -1,100 +1,149 @@
+from main.src.domain.beverageMaker import BeverageMaker
+from main.src.domain.inventory import Inventory
 from main.src.domain.machine import Machine
 from main.src.domain.beverage import Beverage
 
 from resources.test.decorators.testDecorator import testDecorator
 
-'''
-all tests written first to ensure Red, Green and Refactor
+basicMilkQuantity = 1000
+basicWaterQuantity = 1000
+basicCocoaQuantity = 200
+basicTeaSyrupQuantity = 100
 
-Used Decorator to display method name and result before it is executed
-'''
+emptyInventory = Inventory({})
+
+basicInventory = Inventory({"milk": basicMilkQuantity,
+                            "water": basicWaterQuantity,
+                            "cocoa": basicCocoaQuantity,
+                            "tea_syrup": basicTeaSyrupQuantity})
+
+sampleBeverages = [
+    Beverage("Kashmiri Kahwa", {
+        "kasmiri_tea_leaves": 10,
+        "hot_water": 200
+    }),
+    Beverage("black tea", {
+        "water": 200,
+        "tea_syrup": 10
+    })
+]
+
+
 
 def setupOneOutletMachineWithNoInventory():
-    return Machine(1,{})
+    simpleBeverageMaker = BeverageMaker()
+    return Machine(1, emptyInventory,simpleBeverageMaker)
 
-basicMilkInventory = 1000
-basicWaterInventory = 1000
-basicCocoaInventory = 200
-basicTeaSyrupInventory = 100
 
 def setupOneOutletMachineWithBasicInventory():
-    return Machine(1,{"milk": basicMilkInventory,
-                    "water":basicWaterInventory,
-                    "cocoa": basicCocoaInventory,
-                    "tea_syrup": basicTeaSyrupInventory})
+    simpleBeverageMaker = BeverageMaker()
+    return Machine(1, basicInventory,
+                   simpleBeverageMaker)
+
 
 def setupBlackTea():
-    return Beverage("black tea",{"water": 200, "tea_syrup": 10})
+    return Beverage("black tea", {"water": 200, "tea_syrup": 10})
+
 
 @testDecorator
 def refillCanAddNewIngredientsIfNotPresent():
-   # arrange
+    # arrange
     machineUnderTest = setupOneOutletMachineWithNoInventory()
-    #act
-    machineUnderTest.refill("cocoa",100)
-   #assert
-    assert len(machineUnderTest.inventory) == 1
-    assert machineUnderTest.inventory["cocoa"] == 100
+    # act
+    machineUnderTest.inventory.refill("cocoa", 100)
+    # assert
+    assert len(machineUnderTest.inventory.inventory) == 1
+    assert machineUnderTest.inventory.inventory["cocoa"] == 100
+
 
 @testDecorator
 def refillCanUpdateIngredientQuantityIfPresent():
-   # arrange
-    machineUnderTest = setupOneOutletMachineWithBasicInventory()
-    #act
-    itemQuantityToUpdate = 100
-    itemUnderTest = "cocoa"
-    machineUnderTest.refill(itemUnderTest, itemQuantityToUpdate)
-   #assert
-    assert machineUnderTest.inventory["cocoa"] == basicCocoaInventory + itemQuantityToUpdate
-    assert machineUnderTest.inventory["milk"] == basicMilkInventory
-
-@testDecorator
-def canMakeOneBeverageIfIngredientsPresentInInventory():
     # arrange
     machineUnderTest = setupOneOutletMachineWithBasicInventory()
-    beverageUnderTest = Beverage("black tea",{"water": 200, "tea_syrup": 10})
+    # act
+    itemQuantityToUpdate = 100
+    itemUnderTest = "cocoa"
+    machineUnderTest.inventory.refill(itemUnderTest, itemQuantityToUpdate)
+    # assert
+    assert machineUnderTest.inventory.inventory["cocoa"] == basicCocoaQuantity + itemQuantityToUpdate
+    assert machineUnderTest.inventory.inventory["milk"] == basicMilkQuantity
+
+
+@testDecorator
+
+
+def canNotMakeABeverageIfIngredientsNotPresentInInventory():
+
+    machineUnderTest = setupOneOutletMachineWithNoInventory()
+    beverageUnderTest = Beverage("black tea", {"water": 200, "tea_syrup": 10})
+    result= machineUnderTest.make_beverage(beverageUnderTest)
+   # assert result == False
+
+@testDecorator
+def simpleMachineCanMakeOneBeverageIfIngredientsPresentInInventory():
+    # arrange
+    machineUnderTest = setupOneOutletMachineWithBasicInventory()
+    beverageUnderTest = Beverage("black tea", {"water": 200, "tea_syrup": 10})
+    print("Intial tea syrup quantity" , machineUnderTest.inventory.inventory["tea_syrup"])
+
     # act
     machineUnderTest.make_beverage(beverageUnderTest)
     # assert
-    assert machineUnderTest.inventory["tea_syrup"] == basicTeaSyrupInventory - beverageUnderTest.composition["tea_syrup"]
-    assert machineUnderTest.inventory["water"] == basicWaterInventory - beverageUnderTest.composition["water"]
+    print("Updated tea syrup quantity" , machineUnderTest.inventory.inventory["tea_syrup"])
+    assert machineUnderTest.inventory.inventory["tea_syrup"] == basicTeaSyrupQuantity - beverageUnderTest.composition["tea_syrup"]
+    assert machineUnderTest.inventory.inventory["water"] == basicWaterQuantity - beverageUnderTest.composition["water"]
+
 
 @testDecorator
-def canMakeTwoBeverageIfIngredientsPresentInInventory():
+def simpleMachineCanMakeTwoMoreBeverageIfIngredientsPresentInInventory():
     # arrange
     machineUnderTest = setupOneOutletMachineWithBasicInventory()
     blackTeaComposition = {"water": 200, "tea_syrup": 10}
-    beverageUnderTest = Beverage("black tea",blackTeaComposition)
+    beverageUnderTest = Beverage("black tea", blackTeaComposition)
+    print("Intial tea syrup quantity" , machineUnderTest.inventory.inventory["tea_syrup"])
+
     # act
     machineUnderTest.make_beverage(beverageUnderTest)
+    print("Updated tea syrup quantity" , machineUnderTest.inventory.inventory["tea_syrup"])
+
     machineUnderTest.make_beverage(beverageUnderTest)
+    print("Updated tea syrup quantity" , machineUnderTest.inventory.inventory["tea_syrup"])
+
 
     # assert
-    assert machineUnderTest.inventory["tea_syrup"] == basicTeaSyrupInventory - 2 * blackTeaComposition["tea_syrup"]
-    assert machineUnderTest.inventory["water"] == basicWaterInventory - 2 * blackTeaComposition["water"]
+    assert machineUnderTest.inventory.inventory["tea_syrup"] == basicTeaSyrupQuantity - 3 * blackTeaComposition["tea_syrup"]
+    assert machineUnderTest.inventory.inventory["water"] == basicWaterQuantity - 3 * blackTeaComposition["water"]
 
-@testDecorator
-def canNotMakeABeverageIfIngredientsNotPresentInInventory():
-    machineUnderTest = setupOneOutletMachineWithNoInventory()
-    beverageUnderTest = setupBlackTea()
-    assert machineUnderTest.make_beverage(beverageUnderTest) == False
+
+
+
 
 @testDecorator
 def canNotMakeABeverageIfIngredientsAreInsufficient():
     machineUnderTest = setupOneOutletMachineWithBasicInventory()
     beverageUnderTest = Beverage("Extreme Strong Tea", {"tea_syrup": 1000})
-    assert machineUnderTest.make_beverage(beverageUnderTest) == False
-
-
+    machineUnderTest.make_beverage(beverageUnderTest)
 
 
 def main():
     print("\nRunning Unit Tests ")
+
     refillCanAddNewIngredientsIfNotPresent()
     refillCanUpdateIngredientQuantityIfPresent()
-    canMakeOneBeverageIfIngredientsPresentInInventory()
+
+
+    simpleMachineCanMakeOneBeverageIfIngredientsPresentInInventory()
+
+    simpleMachineCanMakeTwoMoreBeverageIfIngredientsPresentInInventory()
+
+
     canNotMakeABeverageIfIngredientsNotPresentInInventory()
+
+
     canNotMakeABeverageIfIngredientsAreInsufficient()
+
+
+
 
 if __name__ == "__main__":
     main()

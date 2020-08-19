@@ -1,6 +1,6 @@
 import threading
 
-
+'''Pure Data Class'''
 class Beverage:
     '''
     composition is a dict/Map of ingredient and quantity
@@ -11,11 +11,13 @@ class Beverage:
         self.composition = composition
 
     '''
+    
+    YAGNI
        a method that ascertains if a beverage can be
        prepared
-    '''
+    
 
-    def canPrepareBeverage(self, inventory):
+    def isBrewable(self, inventory):
         if len(inventory) == 0:
             print("Inventory is exhausted, refill now !")
             return False
@@ -28,3 +30,5 @@ class Beverage:
                 print(self.name, "cannot be prepared because %s is not sufficient" % ingredient)
                 return False
         return True
+        
+    '''

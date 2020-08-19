@@ -1,5 +1,8 @@
 import threading
 
+from ..exceptionsUtils import UnavailableIngredientException
+
+
 
 class Machine:
     '''
@@ -7,24 +10,19 @@ class Machine:
     inventory is a Map of Ingredients and their available portions
     '''
 
-    def __init__(self, numberOfOutlets, inventory):
+    def __init__(self, numberOfOutlets, inventory,beverageMaker):
         self.numberOfOutlets = numberOfOutlets
         self.inventory = inventory
+        self.beverageMaker = beverageMaker
         self.currentOrders = 0
-        self._lock = threading.Lock()
+        self.totalBeveragesBrewed = 0
+        #self._lock = threading.Lock()
 
     '''
     A refill method that updates the quantity of an
     existing ingredient or adds a new ingredient to the inventory
     '''
 
-    def refill(self,ingredient,quantity):
-        if ingredient in self.inventory:
-            self.inventory[ingredient] += quantity
-            print("Quantity of %s" % ingredient ,"has been updated in inventory by %s" % quantity)
-        else:
-            self.inventory[ingredient] = quantity
-            print("Ingredient %s" % ingredient ,"has been added in inventory with quantity of %s" % quantity)
 
 
     def make_beverage(self, beverage):
@@ -35,22 +33,21 @@ class Machine:
 
         self.currentOrders += 1
 
-        ingredients_needed = beverage.composition
+        '''
+                Now Brew the beverage and update Ingredient 
+                in the Inventory by locking it        
+        '''
 
-        self._lock.acquire()
-        result = beverage.canPrepareBeverage(self.inventory)
+        result = self.beverageMaker.brew(inventory=self.inventory, beverageToBrew=beverage)
+       # print(result)
+        if not("because" in result):
+            self.totalBeveragesBrewed += 1
 
-        if not result:
-            self._lock.release()
-            self.currentOrders -= 1
-            return result
-
-        for ingredient, value in ingredients_needed.items():
-            self.inventory[ingredient] -= value
-
-        self._lock.release()
+        print(result)
         self.currentOrders -= 1
 
-        print("%s is prepared" % beverage.name)
 
-        return True
+
+#        print(result ,"is brewed")
+
+        #return True
