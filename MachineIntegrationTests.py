@@ -1,3 +1,5 @@
+from main.src.domain.beverageMaker import BeverageMaker
+from main.src.domain.inventory import Inventory
 from main.src.domain.machine import Machine
 from main.src.domain.beverage import Beverage
 
@@ -23,7 +25,7 @@ def setupMachine(jsonPath):
     outlet_count = json_extract(sample_machine, 'count_n')[0]
     inventory = sample_machine['total_items_quantity']
     availableBeverages = sample_machine['beverages']
-    return Machine(outlet_count, inventory),availableBeverages
+    return Machine(outlet_count, Inventory(inventory),BeverageMaker()),availableBeverages
 
 @testDecorator
 def shouldHaveInventoryAndBeverageCompositionLikeJSON():
@@ -39,29 +41,49 @@ def shouldHaveInventoryAndBeverageCompositionLikeJSON():
     expectedOutlets = 3
     #assert
     assert machineUnderTest.currentOrders == 0
-    assert len(machineUnderTest.inventory) == len(expectedInventory) \
-           and sorted(machineUnderTest.inventory) == sorted(expectedInventory)
+    assert len(machineUnderTest.inventory.inventory) == len(expectedInventory) \
+           and sorted(machineUnderTest.inventory.inventory) == sorted(expectedInventory)
     assert machineUnderTest.numberOfOutlets == expectedOutlets
 
 @testDecorator
 def shouldDisplayErrorForInsufficientIngredient():
     #arrange
     machineUnderTest,availableBeverages = setupMachine('resources/test/testLowIngredients.json')
+    expectedTotalBeveragesProduced = machineUnderTest.totalBeveragesBrewed
     #act
-    result =  machineUnderTest.make_beverage(Beverage("hot_tea",availableBeverages["hot_tea"]))
+    machineUnderTest.make_beverage(Beverage("hot_tea",availableBeverages["hot_tea"]))
     #assert
-    assert result == False
+    actualTotalBeveragesProduced = machineUnderTest.totalBeveragesBrewed
+
+    assert expectedTotalBeveragesProduced == actualTotalBeveragesProduced
 
 @testDecorator
 def shouldDisplayErrorForUnavailableIngredient():
     #arrange
     machineUnderTest,availableBeverages = setupMachine('resources/test/testUnavailableIngredients.json')
+    expectedTotalBeveragesProduced = machineUnderTest.totalBeveragesBrewed
+
     #act
     beverageUnderTest = Beverage("hot_tea",availableBeverages["hot_tea"])
-    result =  machineUnderTest.make_beverage(beverageUnderTest)
+    machineUnderTest.make_beverage(beverageUnderTest)
     #assert
-    assert result == False
-    #assert beverageUnderTest.canPrepareBeverage.called
+    actualTotalBeveragesProduced = machineUnderTest.totalBeveragesBrewed
+
+    assert expectedTotalBeveragesProduced == actualTotalBeveragesProduced    #assert beverageUnderTest.canPrepareBeverage.called
+
+@testDecorator
+def shouldBrewOneDrink():
+    #arrange
+    machineUnderTest,availableBeverages = setupMachine('resources/test/test.json')
+    intialTotalBeveragesProduced = machineUnderTest.totalBeveragesBrewed
+
+    #act
+    beverageUnderTest = Beverage("hot_tea",availableBeverages["hot_tea"])
+    machineUnderTest.make_beverage(beverageUnderTest)
+    #assert
+    assert machineUnderTest.totalBeveragesBrewed == intialTotalBeveragesProduced + 1
+
+
 
 def main():
     print("\nRunning Integration Tests ")
@@ -70,8 +92,7 @@ def main():
 
     shouldDisplayErrorForInsufficientIngredient()
     shouldDisplayErrorForUnavailableIngredient()
-
-    #print("Hello World!")
+    shouldBrewOneDrink()
 
 if __name__ == "__main__":
     main()
